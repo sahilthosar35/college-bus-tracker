@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build:server",
+      "problemMatcher": ["$tsc"],
+      "group": "build",
+      "label": "npm: build:server"
+    },
+    {
+      "type": "npm",
+      "script": "build:client",
+      "problemMatcher": [],
+      "group": "build",
+      "label": "npm: build:client"
+    }
+  ]
+}
