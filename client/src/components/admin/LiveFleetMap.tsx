@@ -83,6 +83,7 @@ export const LiveFleetMap: React.FC<LiveFleetMapProps> = ({ buses, routes, onSel
         ref={mapRef}
         style={{ height: '100%', width: '100%', background: '#090d16' }}
         zoomControl={false}
+        scrollWheelZoom={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -30,7 +30,7 @@ export const SOSModal: React.FC<SOSModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
       <div className="bg-slate-900 border border-red-600/40 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-red-950/50 relative overflow-hidden">
         
         {/* Glow accent */}

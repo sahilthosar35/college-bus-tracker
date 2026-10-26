@@ -141,6 +141,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         ref={mapRef}
         style={{ height: '100%', width: '100%', background: '#090d16' }}
         zoomControl={false}
+        scrollWheelZoom={false}
       >
         {/* OpenStreetMap Tile Layer */}
         <TileLayer
