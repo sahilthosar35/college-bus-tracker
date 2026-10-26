@@ -3,7 +3,7 @@ import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Polyline, Circle,
 import L from 'leaflet';
 import { Bus, Route, RouteStop } from '../../types';
 import { JIT_CAMPUS_COORDS, JIT_CAMPUS_NAME } from '../../data/mockData';
-import { Maximize2, Navigation } from 'lucide-react';
+import { Maximize2, Navigation, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface MapContainerProps {
   bus: Bus | null;
@@ -103,6 +103,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       
       {/* Floating Map Action Buttons */}
       <div className="absolute top-3 right-3 z-[1000] flex flex-col space-y-2">
+        <button
+          onClick={() => mapRef.current?.zoomIn()}
+          title="Zoom in"
+          aria-label="Zoom in"
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 p-2.5 rounded-xl shadow-lg transition backdrop-blur-sm"
+        >
+          <ZoomIn className="w-4 h-4 text-blue-400" />
+        </button>
+        <button
+          onClick={() => mapRef.current?.zoomOut()}
+          title="Zoom out"
+          aria-label="Zoom out"
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 p-2.5 rounded-xl shadow-lg transition backdrop-blur-sm"
+        >
+          <ZoomOut className="w-4 h-4 text-blue-400" />
+        </button>
         <button
           onClick={handleFitBounds}
           title="Fit Whole Route to Screen"

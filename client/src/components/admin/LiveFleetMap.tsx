@@ -3,7 +3,7 @@ import { MapContainer as LeafletMap, TileLayer, Marker, Popup, Polyline } from '
 import L from 'leaflet';
 import { Bus, Route } from '../../types';
 import { JIT_CAMPUS_COORDS, JIT_CAMPUS_NAME } from '../../data/mockData';
-import { Maximize2, ShieldAlert } from 'lucide-react';
+import { Maximize2, ShieldAlert, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface LiveFleetMapProps {
   buses: Bus[];
@@ -67,7 +67,23 @@ export const LiveFleetMap: React.FC<LiveFleetMapProps> = ({ buses, routes, onSel
   return (
     <div className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 h-[440px] sm:h-[520px] w-full">
       {/* Map Action Button */}
-      <div className="absolute top-3 right-3 z-[1000]">
+      <div className="absolute top-3 right-3 z-[1000] flex flex-col space-y-2">
+        <button
+          onClick={() => mapRef.current?.zoomIn()}
+          title="Zoom in"
+          aria-label="Zoom in"
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 p-2.5 rounded-xl shadow-lg transition backdrop-blur-sm"
+        >
+          <ZoomIn className="w-4 h-4 text-blue-400" />
+        </button>
+        <button
+          onClick={() => mapRef.current?.zoomOut()}
+          title="Zoom out"
+          aria-label="Zoom out"
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 p-2.5 rounded-xl shadow-lg transition backdrop-blur-sm"
+        >
+          <ZoomOut className="w-4 h-4 text-blue-400" />
+        </button>
         <button
           onClick={handleFitAll}
           title="Reset Global Fleet View"
