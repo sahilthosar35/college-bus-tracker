@@ -3,7 +3,7 @@ services:
     name: college-bus-tracker-api
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build:server
+    buildCommand: npm ci --include=dev && npm run build:server
     startCommand: npm start
     envVars:
       - key: NODE_ENV
