@@ -34,13 +34,29 @@ export const App: React.FC = () => {
           fetch(`${API_BASE_URL}/alerts`).then(r => r.json()),
         ]);
 
-        if (busRes.status === 'fulfilled' && busRes.value.success) {
+        if (
+          busRes.status === 'fulfilled' &&
+          busRes.value.success &&
+          Array.isArray(busRes.value.data) &&
+          busRes.value.data.length > 0
+        ) {
           setBuses(busRes.value.data);
         }
-        if (routeRes.status === 'fulfilled' && routeRes.value.success) {
+        if (
+          routeRes.status === 'fulfilled' &&
+          routeRes.value.success &&
+          Array.isArray(routeRes.value.data) &&
+          routeRes.value.data.length > 0 &&
+          routeRes.value.data.every((route: Route) => Array.isArray(route.stops))
+        ) {
           setRoutes(routeRes.value.data);
         }
-        if (alertRes.status === 'fulfilled' && alertRes.value.success) {
+        if (
+          alertRes.status === 'fulfilled' &&
+          alertRes.value.success &&
+          Array.isArray(alertRes.value.data) &&
+          alertRes.value.data.length > 0
+        ) {
           setAlerts(alertRes.value.data);
         }
       } catch (err) {
