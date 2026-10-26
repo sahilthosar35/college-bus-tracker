@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppRole, Bus, Route, Alert, AlertType } from './types';
+import { AppRole, AuthUser, Bus, Route, Alert, AlertType } from './types';
 import { MOCK_BUSES, MOCK_ROUTES, MOCK_ALERTS } from './data/mockData';
 import { useSocket } from './hooks/useSocket';
 import { Header } from './components/common/Header';
@@ -10,28 +10,52 @@ import { StudentView } from './components/student/StudentView';
 import { DriverConsole } from './components/driver/DriverConsole';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { GPSReading } from './hooks/useDriverGPS';
+import { LoginPage } from './components/common/LoginPage';
+import { ChangePasswordModal } from './components/common/ChangePasswordModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const App: React.FC = () => {
-  const [currentRole, setCurrentRole] = useState<AppRole>('student');
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [socketAuthorizationError, setSocketAuthorizationError] = useState<string | null>(null);
+  const currentRole: AppRole = authUser?.role || 'student';
   const [buses, setBuses] = useState<Bus[]>(MOCK_BUSES);
   const [routes, setRoutes] = useState<Route[]>(MOCK_ROUTES);
   const [alerts, setAlerts] = useState<Alert[]>(MOCK_ALERTS);
   const [isSOSOpen, setIsSOSOpen] = useState<boolean>(false);
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState<boolean>(false);
   const [geofencePushAlert, setGeofencePushAlert] = useState<string | null>(null);
 
-  const { socket, isConnected, emit, on } = useSocket();
+  const { socket, isConnected, emit, on } = useSocket(Boolean(authUser));
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/auth/me`, { credentials: 'include' })
+      .then(async response => {
+        if (!response.ok) return null;
+        const result = await response.json();
+        return result.data.user as AuthUser;
+      })
+      .then(user => {
+        setAuthUser(user);
+        setIsLoadingData(Boolean(user));
+      })
+      .catch(() => setAuthUser(null))
+      .finally(() => setIsCheckingSession(false));
+  }, []);
 
   // Initial Fetch from REST Backend if available
   useEffect(() => {
+    if (!authUser) return;
+    setIsLoadingData(true);
     const fetchInitialData = async () => {
       try {
         const [busRes, routeRes, alertRes] = await Promise.allSettled([
-          fetch(`${API_BASE_URL}/buses`).then(r => r.json()),
-          fetch(`${API_BASE_URL}/routes`).then(r => r.json()),
-          fetch(`${API_BASE_URL}/alerts`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/buses`, { credentials: 'include' }).then(r => r.json()),
+          fetch(`${API_BASE_URL}/routes`, { credentials: 'include' }).then(r => r.json()),
+          fetch(`${API_BASE_URL}/alerts`, { credentials: 'include' }).then(r => r.json()),
         ]);
 
         if (
@@ -61,18 +85,20 @@ export const App: React.FC = () => {
         }
       } catch (err) {
         console.info('[Client API] Backend unreachable; operating in standalone offline simulator mode.');
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
     fetchInitialData();
-  }, []);
+  }, [authUser]);
 
   // WebSocket Subscription to Channels based on Role
   useEffect(() => {
-    if (!isConnected || !socket) return;
+    if (!isConnected || !socket || !authUser) return;
 
     if (currentRole === 'student') {
-      emit('join_bus', { busId: buses[0]?.id || 'BUS-01' });
+      emit('join_bus', { busId: authUser.assignedBusId });
     } else if (currentRole === 'admin') {
       emit('join_admin');
     }
@@ -116,6 +142,9 @@ export const App: React.FC = () => {
         prev.map(a => (a.id === alertId ? { ...a, status: 'RESOLVED' } : a))
       );
     });
+    const unsubAuthorizationError = on('authorization_error', ({ message }: { message: string }) => {
+      setSocketAuthorizationError(message);
+    });
 
     return () => {
       unsubBusTelemetry();
@@ -123,8 +152,9 @@ export const App: React.FC = () => {
       unsubGeofence();
       unsubAlert();
       unsubResolved();
+      unsubAuthorizationError();
     };
-  }, [isConnected, socket, currentRole, buses, emit, on]);
+  }, [isConnected, socket, currentRole, authUser, buses, emit, on]);
 
   // Handler: Driver transmits GPS telemetry
   const handleTransmitTelemetry = useCallback(
@@ -165,6 +195,7 @@ export const App: React.FC = () => {
   const handleDispatchIncident = useCallback(
     (busId: string, type: AlertType, message: string) => {
       const targetBus = buses.find(b => b.id === busId) || buses[0];
+      if (!targetBus) return;
       const newAlert: Alert = {
         id: `ALT-${Date.now().toString().slice(-6)}`,
         busId,
@@ -196,6 +227,24 @@ export const App: React.FC = () => {
     },
     [buses, currentRole, emit]
   );
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('The server could not end your session.');
+      setAuthUser(null);
+      setIsLoadingData(false);
+      setSocketAuthorizationError(null);
+      setIsSOSOpen(false);
+      setIsAboutOpen(false);
+      setIsPasswordOpen(false);
+    } catch (error) {
+      setSocketAuthorizationError(error instanceof Error ? error.message : 'Unable to sign out.');
+    }
+  }, []);
 
   // Handler: Advance / Skip Stop in Driver Checklist
   const handleUpdateStopProgress = useCallback(
@@ -254,44 +303,84 @@ export const App: React.FC = () => {
     [alerts, emit]
   );
 
+  if (isCheckingSession) {
+    return <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300">Checking your session…</main>;
+  }
+
+  if (!authUser) {
+    return <LoginPage onAuthenticated={(user) => {
+      setAuthUser(user);
+      setIsLoadingData(true);
+      setSocketAuthorizationError(null);
+    }} />;
+  }
+
+  const visibleBuses = authUser.role === 'admin'
+    ? buses
+    : buses.filter(bus => bus.id === authUser.assignedBusId);
+  const visibleRoutes = authUser.role === 'admin'
+    ? routes
+    : routes.filter(route => visibleBuses.some(bus => bus.routeId === route.id));
+  const visibleAlerts = authUser.role === 'admin'
+    ? alerts
+    : alerts.filter(alert => alert.busId === authUser.assignedBusId);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-blue-600 selection:text-white">
       
-      {/* Navbar with College Identity & Role Switcher */}
+      {/* Navbar with account identity and session controls */}
       <Header
-        currentRole={currentRole}
-        onSelectRole={setCurrentRole}
+        user={authUser}
+        onSignOut={handleSignOut}
+        onOpenPassword={() => setIsPasswordOpen(true)}
         isConnected={isConnected}
         onOpenSOS={() => setIsSOSOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
-        activeAlertCount={alerts.filter(a => a.status === 'ACTIVE').length}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {currentRole === 'student' && (
+        {socketAuthorizationError && (
+          <p role="alert" className="mb-4 rounded-xl border border-amber-800 bg-amber-950/50 px-4 py-3 text-sm text-amber-200">
+            {socketAuthorizationError}
+          </p>
+        )}
+        {isLoadingData && (
+          <p className="text-center text-sm text-slate-400 py-12">Loading your assigned transport data…</p>
+        )}
+        {!isLoadingData && currentRole === 'student' && visibleBuses.length > 0 && visibleRoutes.length > 0 && (
           <StudentView
-            routes={routes}
-            buses={buses}
-            activeAlerts={alerts}
+            routes={visibleRoutes}
+            buses={visibleBuses}
+            activeAlerts={visibleAlerts}
             onOpenSOS={() => setIsSOSOpen(true)}
             onOpenAbout={() => setIsAboutOpen(true)}
             geofencePushAlert={geofencePushAlert}
           />
         )}
+        {!isLoadingData && currentRole === 'student' && (visibleBuses.length === 0 || visibleRoutes.length === 0) && (
+          <p className="text-center text-sm text-slate-400 py-12">
+            No bus is assigned to this account yet. Contact the transport administrator.
+          </p>
+        )}
 
-        {currentRole === 'driver' && (
+        {!isLoadingData && currentRole === 'driver' && visibleBuses.length > 0 && visibleRoutes.length > 0 && (
           <DriverConsole
-            buses={buses}
-            routes={routes}
+            buses={visibleBuses}
+            routes={visibleRoutes}
             onTransmitTelemetry={handleTransmitTelemetry}
             onDispatchAlert={handleDispatchIncident}
             onUpdateStopProgress={handleUpdateStopProgress}
             onUpdateTripStatus={handleUpdateTripStatus}
           />
         )}
+        {!isLoadingData && currentRole === 'driver' && (visibleBuses.length === 0 || visibleRoutes.length === 0) && (
+          <p className="text-center text-sm text-slate-400 py-12">
+            No vehicle is assigned to this driver account. Contact the transport administrator.
+          </p>
+        )}
 
-        {currentRole === 'admin' && (
+        {!isLoadingData && currentRole === 'admin' && (
           <AdminDashboard
             buses={buses}
             routes={routes}
@@ -308,14 +397,22 @@ export const App: React.FC = () => {
       <SOSModal
         isOpen={isSOSOpen}
         onClose={() => setIsSOSOpen(false)}
-        activeBus={buses[0] || null}
-        onDispatchSOS={(reason) => handleDispatchIncident(buses[0]?.id || 'BUS-01', 'SOS', reason)}
+        activeBus={buses.find(bus => bus.id === authUser.assignedBusId) || buses[0] || null}
+        onDispatchSOS={(reason) => {
+          const bus = buses.find(item => item.id === authUser.assignedBusId) || buses[0];
+          if (bus) handleDispatchIncident(bus.id, 'SOS', reason);
+        }}
       />
 
       {/* Project & Group G6 Academic About Modal */}
       <AboutModal
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={isPasswordOpen}
+        onClose={() => setIsPasswordOpen(false)}
       />
 
     </div>

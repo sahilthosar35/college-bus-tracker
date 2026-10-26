@@ -3,14 +3,21 @@ import { io, Socket } from 'socket.io-client';
 
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
-export const useSocket = () => {
+export const useSocket = (enabled: boolean) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      socketRef.current = null;
+      setIsConnected(false);
+      return;
+    }
+
     const socket = io(SOCKET_SERVER_URL, {
       transports: ['websocket', 'polling'],
+      withCredentials: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       timeout: 10000
@@ -38,7 +45,7 @@ export const useSocket = () => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [enabled]);
 
   const emit = useCallback((event: string, data?: any) => {
     if (socketRef.current && socketRef.current.connected) {

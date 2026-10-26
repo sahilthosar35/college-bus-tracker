@@ -1,10 +1,17 @@
 import { Request, Response } from 'express';
 import { RouteRepository } from '../models/Route';
+import { BusRepository } from '../models/Bus';
 
 export class RouteController {
   public static async getAllRoutes(req: Request, res: Response): Promise<void> {
     try {
-      const routes = await RouteRepository.getAll();
+      const allRoutes = await RouteRepository.getAll();
+      const assignedBus = req.user?.role === 'admin' || !req.user?.assignedBusId
+        ? null
+        : await BusRepository.getById(req.user.assignedBusId);
+      const routes = req.user?.role === 'admin'
+        ? allRoutes
+        : allRoutes.filter(route => route.id === assignedBus?.routeId);
       res.json({ success: true, count: routes.length, data: routes });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });

@@ -6,7 +6,10 @@ import { ETAService } from '../services/etaService';
 export class BusController {
   public static async getAllBuses(req: Request, res: Response): Promise<void> {
     try {
-      const buses = await BusRepository.getAll();
+      const allBuses = await BusRepository.getAll();
+      const buses = req.user?.role === 'admin'
+        ? allBuses
+        : allBuses.filter(bus => bus.id === req.user?.assignedBusId);
       res.json({ success: true, count: buses.length, data: buses });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });

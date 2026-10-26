@@ -5,13 +5,20 @@ import { TelemetryRepository } from '../models/Telemetry';
 import { AlertRepository } from '../models/Alert';
 import { ETAService } from '../services/etaService';
 import { GeofenceService } from '../services/geofenceService';
+import { AuthenticatedUser } from '../types';
 
 export const registerSocketHandlers = (io: Server) => {
   io.on('connection', (socket: Socket) => {
+    const user = socket.data.user as AuthenticatedUser;
+    const deny = (message: string) => socket.emit('authorization_error', { message });
     console.log(`[WebSocket] Client connected: ${socket.id}`);
 
     // Student / Parent joins specific bus channel
     socket.on('join_bus', async ({ busId }: { busId: string }) => {
+      if (user.role !== 'student' || user.assignedBusId !== busId) {
+        deny('You can only view your assigned bus.');
+        return;
+      }
       try {
         const roomName = `bus_${busId}`;
         socket.join(roomName);
@@ -44,6 +51,10 @@ export const registerSocketHandlers = (io: Server) => {
     });
 
     socket.on('leave_bus', ({ busId }: { busId: string }) => {
+      if (user.role !== 'student' || user.assignedBusId !== busId) {
+        deny('You can only leave your assigned bus channel.');
+        return;
+      }
       const roomName = `bus_${busId}`;
       socket.leave(roomName);
       console.log(`[WebSocket] Socket ${socket.id} left room ${roomName}`);
@@ -51,6 +62,10 @@ export const registerSocketHandlers = (io: Server) => {
 
     // Transport Admin joins fleet manager channel
     socket.on('join_admin', async () => {
+      if (user.role !== 'admin') {
+        deny('Administrator access is required.');
+        return;
+      }
       try {
         socket.join('admin_fleet');
         console.log(`[WebSocket] Admin console joined 'admin_fleet': ${socket.id}`);
@@ -77,6 +92,10 @@ export const registerSocketHandlers = (io: Server) => {
       currentStopIndex?: number;
       tripStatus?: any;
     }) => {
+      if (user.role !== 'driver' || user.assignedBusId !== data.busId) {
+        deny('Driver access to this bus is not permitted.');
+        return;
+      }
       try {
         const { busId, lat, lng, speed, heading, accuracy, currentStopIndex, tripStatus } = data;
 
@@ -182,6 +201,14 @@ export const registerSocketHandlers = (io: Server) => {
       location: { lat: number; lng: number };
       reportedBy: any;
     }) => {
+      if (
+        !['student', 'driver', 'admin'].includes(user.role) ||
+        (user.role !== 'admin' && user.assignedBusId !== incidentData.busId) ||
+        (user.role === 'student' && incidentData.type !== 'SOS')
+      ) {
+        deny('You cannot report an incident for this bus.');
+        return;
+      }
       try {
         const isSOS = incidentData.type === 'SOS';
         const newAlert = await AlertRepository.createAlert({
@@ -192,7 +219,7 @@ export const registerSocketHandlers = (io: Server) => {
           message: incidentData.message,
           location: incidentData.location,
           status: 'ACTIVE',
-          reportedBy: incidentData.reportedBy || 'DRIVER'
+          reportedBy: user.role === 'driver' ? 'DRIVER' : 'STUDENT'
         });
 
         if (isSOS) {
@@ -204,7 +231,7 @@ export const registerSocketHandlers = (io: Server) => {
         }
 
         // Broadcast to all clients and admin
-        io.emit('new_alert', newAlert);
+        io.to('admin_fleet').emit('new_alert', newAlert);
         io.to(`bus_${incidentData.busId}`).emit('bus_incident_alert', newAlert);
 
         const updatedBus = await BusRepository.getById(incidentData.busId);
@@ -224,10 +251,15 @@ export const registerSocketHandlers = (io: Server) => {
 
     // Admin resolves incident
     socket.on('resolve_alert', async ({ alertId }: { alertId: string }) => {
+      if (user.role !== 'admin') {
+        deny('Administrator access is required.');
+        return;
+      }
       try {
         const resolved = await AlertRepository.resolveAlert(alertId);
         if (resolved) {
-          io.emit('alert_resolved', { alertId, resolvedAt: resolved.resolvedAt });
+          io.to('admin_fleet').emit('alert_resolved', { alertId, resolvedAt: resolved.resolvedAt });
+          io.to(`bus_${resolved.busId}`).emit('alert_resolved', { alertId, resolvedAt: resolved.resolvedAt });
           const bus = await BusRepository.getById(resolved.busId);
           if (bus && bus.isSOS) {
             await BusRepository.updateStatus(bus.id, 'EN_ROUTE', false);
@@ -255,6 +287,10 @@ export const registerSocketHandlers = (io: Server) => {
       stopIndex: number;
       action: 'REACHED' | 'SKIPPED';
     }) => {
+      if (user.role !== 'driver' || user.assignedBusId !== busId) {
+        deny('Driver access to this bus is not permitted.');
+        return;
+      }
       try {
         const bus = await BusRepository.getById(busId);
         if (!bus) return;

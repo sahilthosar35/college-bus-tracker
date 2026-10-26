@@ -108,6 +108,19 @@ The repository includes deployment configuration for Netlify (frontend) and Rend
    * `VITE_SOCKET_URL`: `https://your-backend.onrender.com`
 5. Deploy or redeploy the Netlify site. Check that `https://your-backend.onrender.com/api/health` returns JSON with `"status": "ONLINE"`, then open the Netlify site URL.
 
+## User Accounts & Access
+
+The application uses individual email/password accounts and role-based access. Passwords are stored as salted scrypt hashes, and sign-in is maintained with an HTTP-only session cookie. Users can only access the bus assigned to their account; administrators can access the full fleet.
+
+* Students and parents can register themselves and select their assigned bus.
+* Drivers and additional administrators must be created by an administrator from the **User accounts** panel.
+* On a new MongoDB database, the server seeds the sample fleet and routes so bus assignment is available.
+* The first administrator is created at server startup from `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Set both as private server environment variables before deployment; do not put real credentials in the repository. If an admin already exists, these values do not overwrite it.
+* Set `AUTH_SECRET` to a unique random value of at least 32 characters. Configure `CLIENT_URL` as the exact frontend origin. The API uses credentialed CORS and secure cross-site cookies in production.
+* Keep MongoDB configured and available: account creation and sign-in return a service-unavailable error when persistent storage is offline rather than storing accounts in the demo in-memory store.
+
+All account passwords must be at least 12 characters. Users can change their password after signing in. Student/parent email verification and password reset email are not configured because this project has no email provider.
+
 The client variables are embedded during the frontend build. If either backend URL changes, update the Netlify variables and redeploy. Never commit database credentials or share them publicly.
 
 ## 6. Project Architecture
@@ -124,19 +137,24 @@ college-bus-tracker/
 │   ├── dist/                  # Compiled JavaScript server build
 │   └── src/
 │       ├── server.ts          # Express + HTTP + Socket.io entrypoint
+│       ├── middleware/
+│       │   └── auth.ts        # Session and role authorization
 │       ├── config/
 │       │   ├── config.ts      # Typed environment configurations
 │       │   └── db.ts          # Dual-Mode Mongo / In-Memory connection pool
 │       ├── models/
+│       │   ├── User.ts        # Persistent account model
 │       │   ├── Bus.ts         # Bus model & repository
 │       │   ├── Route.ts       # Route model & Nagpur stop schemas
 │       │   ├── Telemetry.ts   # High-frequency GPS position logs
 │       │   └── Alert.ts       # SOS & delay incident logs
 │       ├── controllers/
+│       │   ├── authController.ts
 │       │   ├── busController.ts
 │       │   ├── routeController.ts
 │       │   └── alertController.ts
 │       ├── routes/
+│       │   ├── authRoutes.ts
 │       │   ├── busRoutes.ts
 │       │   ├── routeRoutes.ts
 │       │   └── alertRoutes.ts
@@ -163,7 +181,7 @@ college-bus-tracker/
         │   └── useETA.ts      # Live dynamic ETA calculation hook
         └── components/
             ├── common/
-            │   ├── Header.tsx     # Branding, role switcher & socket pill
+            │   ├── Header.tsx     # Branding, account controls & socket pill
             │   ├── Footer.tsx     # Full academic attribution & credits
             │   ├── SOSModal.tsx   # Emergency hotline dialer & SOS trigger
             │   └── AboutModal.tsx # Project overview & group details modal

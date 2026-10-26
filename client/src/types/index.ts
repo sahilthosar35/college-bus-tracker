@@ -1,5 +1,13 @@
 export type AppRole = 'student' | 'driver' | 'admin';
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: AppRole;
+  assignedBusId?: string;
+}
+
 export interface BusLocation {
   lat: number;
   lng: number;

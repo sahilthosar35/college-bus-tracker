@@ -10,6 +10,10 @@ export interface ServerConfig {
   nodeEnv: string;
   clientUrl: string;
   mongoUri: string;
+  authSecret: string;
+  adminEmail: string;
+  adminPassword: string;
+  adminName: string;
   collegeCoordinates: {
     lat: number;
     lng: number;
@@ -25,6 +29,10 @@ export const config: ServerConfig = {
   nodeEnv: process.env.NODE_ENV || 'development',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/college_bus_tracker',
+  authSecret: process.env.AUTH_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'local-development-only-secret-change-before-deploy'),
+  adminEmail: process.env.ADMIN_EMAIL || '',
+  adminPassword: process.env.ADMIN_PASSWORD || '',
+  adminName: process.env.ADMIN_NAME || 'Transport Administrator',
   collegeCoordinates: {
     lat: parseFloat(process.env.COLLEGE_LAT || '21.2330'),
     lng: parseFloat(process.env.COLLEGE_LNG || '79.0880'),

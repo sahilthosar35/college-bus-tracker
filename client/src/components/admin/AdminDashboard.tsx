@@ -3,6 +3,7 @@ import { Bus, Route, Alert } from '../../types';
 import { FleetOverview } from './FleetOverview';
 import { LiveFleetMap } from './LiveFleetMap';
 import { IncidentLog } from './IncidentLog';
+import { AccountManagement } from './AccountManagement';
 import { Bus as BusIcon, Users, Phone, MapPin, Gauge } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -40,6 +41,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Overview KPI Cards */}
       <FleetOverview buses={buses} alerts={alerts} />
+
+      <AccountManagement buses={buses} />
 
       {/* Main Grid: Bird's-Eye Live Fleet Map & Incident Stream Console */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
