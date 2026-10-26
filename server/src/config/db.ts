@@ -6,7 +6,7 @@ export let isMongoConnected = false;
 export const connectDB = async (): Promise<void> => {
   try {
     const mongoUri = config.mongoUri;
-    console.log(`[Database] Attempting connection to MongoDB at: ${mongoUri}`);
+    console.log('[Database] Attempting connection to MongoDB.');
 
     // Set connection timeout to 2.5 seconds to prevent blocking if Mongo is offline
     await mongoose.connect(mongoUri, {

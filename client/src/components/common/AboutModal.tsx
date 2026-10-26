@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Award, Users, BookOpen, Layers, Cpu, ShieldCheck, MapPin } from 'lucide-react';
+import { X, Award, BookOpen, Layers, Cpu, ShieldCheck, MapPin } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -47,42 +47,34 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        {/* Project Guide & Faculty */}
+        {/* Faculty and institution */}
         <div className="mt-5 bg-slate-950/60 p-4 rounded-xl border border-slate-800 flex items-start space-x-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs uppercase font-bold text-amber-400 tracking-wider">Project Guide & Supervisor</h4>
-            <p className="text-sm font-bold text-white mt-0.5">Ms. Shubhangi Nagpure</p>
+            <h4 className="text-xs uppercase font-bold text-amber-400 tracking-wider">Faculty Supervision</h4>
             <p className="text-xs text-slate-400">Assistant Professor, Department of Computer Science and Engineering</p>
             <p className="text-xs text-slate-400">Jhulelal Institute of Technology, Lonara, Nagpur</p>
           </div>
         </div>
 
-        {/* Group G6 Team Roster */}
+        {/* Team contributions without personal details */}
         <div className="mt-5">
           <h4 className="text-xs uppercase font-bold text-slate-300 tracking-wider flex items-center space-x-2 mb-3">
-            <Users className="w-4 h-4 text-emerald-400" />
-            <span>Group G6 Team Members (III Semester B.Tech CSE)</span>
+            <span>Project Team Contributions</span>
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {[
-              { name: 'Muskan Khiyaldasani', roll: 'B-21', role: 'Real-Time Telemetry & Socket Pipeline' },
-              { name: 'Narayani Kohale', roll: 'B-22', role: 'Dynamic ETA Prediction Engine' },
-              { name: 'Palaash Belekar', roll: 'B-26', role: 'Geofence Guardian & Proximity Logic' },
-              { name: 'Rajlaxmi Lokhande', roll: 'B-48', role: 'Driver Console & Touch UI' },
-              { name: 'Sahil Thosar', roll: 'B-62', role: 'Full-Stack Integration & Architecture' },
-              { name: 'Krutika Dhage', roll: 'B-02', role: 'Admin Fleet Control & Incident Stream' },
-            ].map((member, i) => (
-              <div key={i} className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-100">{member.name}</p>
-                  <p className="text-[11px] text-slate-400">{member.role}</p>
-                </div>
-                <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-950/80 px-2 py-1 rounded border border-blue-900">
-                  {member.roll}
-                </span>
+              'Real-Time Telemetry & Socket Pipeline',
+              'Dynamic ETA Prediction Engine',
+              'Geofence Guardian & Proximity Logic',
+              'Driver Console & Touch UI',
+              'Full-Stack Integration & Architecture',
+              'Admin Fleet Control & Incident Stream',
+            ].map((contribution) => (
+              <div key={contribution} className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/80">
+                <p className="text-xs font-bold text-slate-100">{contribution}</p>
               </div>
             ))}
           </div>

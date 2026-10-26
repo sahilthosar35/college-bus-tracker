@@ -50,15 +50,6 @@ app.get('/api/health', (req: Request, res: Response) => {
     affiliation: 'Rashtrasant Tukadoji Maharaj Nagpur University (RTMNU)',
     academicSession: '2026–27',
     projectGroup: 'Group G6 - III Semester B.Tech CSE',
-    projectGuide: 'Ms. Shubhangi Nagpure',
-    teamMembers: [
-      { name: 'Muskan Khiyaldasani', rollNo: 'H-21' },
-      { name: 'Narayani Kohale', rollNo: 'H-22' },
-      { name: 'Palaash Belekar', rollNo: 'H-26' },
-      { name: 'Rajlaxmi Lokhande', rollNo: 'H-48' },
-      { name: 'Sahil Thosar', rollNo: 'H-62' },
-      { name: 'Krutika Dhage', rollNo: 'H-02' }
-    ],
     timestamp: new Date().toISOString()
   });
 });
