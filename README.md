@@ -15,18 +15,6 @@
 * **University Affiliation:** Rashtrasant Tukadoji Maharaj Nagpur University (RTMNU)
 * **Academic Session:** 2026–27
 * **Semester / Branch:** III Semester, B.Tech Computer Science and Engineering
-* **Project Guide & Mentor:** **Ms. Shubhangi Nagpure** (Assistant Professor, Dept. of CSE, JIT Nagpur)
-
-### Group G6 Team Members
-
-| Sr. No. | Student Name | Roll Number | Academic Role & Module Ownership |
-|:---:|:---|:---:|:---|
-| 1 | **Muskan Khiyaldasani** | **H-21** | Real-Time Telemetry & Socket.io Pipeline |
-| 2 | **Narayani Kohale** | **H-22** | Dynamic ETA Prediction Engine & Haversine Math |
-| 3 | **Palaash Belekar** | **H-26** | Geofence Guardian & Proximity Ring Trigger |
-| 4 | **Rajlaxmi Lokhande** | **H-48** | Touch-Optimized In-Cab Driver Console UI |
-| 5 | **Sahil Thosar** | **H-62** | Full-Stack Architecture, REST APIs & Leaflet Integration |
-| 6 | **Krutika Dhage** | **H-02** | Fleet Admin Dispatch Command & Incident Console |
 
 ---
 
@@ -268,6 +256,3 @@ This system was designed and implemented for the **Academic Session 2026–27** 
 **Group G6 — Department of Computer Science and Engineering**  
 **Jhulelal Institute of Technology, Lonara, Nagpur**  
 *(Affiliated to Rashtrasant Tukadoji Maharaj Nagpur University - RTMNU)*  
-
-* **Project Guide:** Ms. Shubhangi Nagpure
-* **Team:** Muskan Khiyaldasani, Narayani Kohale, Palaash Belekar, Rajlaxmi Lokhande, Sahil Thosar, Krutika Dhage.
